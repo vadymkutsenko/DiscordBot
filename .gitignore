@@ -1,0 +1,7 @@
+.vs/
+.idea/
+*.user
+**/bin
+**/obj
+**/publish
+**/node_modules
