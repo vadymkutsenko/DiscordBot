@@ -1,8 +1,8 @@
 ﻿using Discord.Commands;
 
-namespace DiscordBot.Modules;
+namespace DiscordBot.Actions.RepeatMessageAction;
 
-public class EchoModule : ModuleBase<SocketCommandContext>
+public class RepeatMessageHandlerModule : ModuleBase<SocketCommandContext>
 {
     [Command("say")]
     [Summary("Echoes a message.")]
