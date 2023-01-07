@@ -23,7 +23,8 @@ public class Bot
         
         _client = new DiscordSocketClient(new DiscordSocketConfig
         {
-            LogLevel = LogSeverity.Info
+            LogLevel = LogSeverity.Info,
+            GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.MessageContent
         });
         
         _commands = new CommandService(new CommandServiceConfig
@@ -47,39 +48,37 @@ public class Bot
         await Task.Delay(Timeout.Infinite);
     }
     
+
     private async Task HandleCommandAsync(SocketMessage arg)
     {
-        // Bail out if it's a System Message.
-        var msg = arg as SocketUserMessage;
-        if (msg == null) return;
-
-        // We don't want the bot to respond to itself or other bots.
-        if (msg.Author.Id == _client.CurrentUser.Id || msg.Author.IsBot) return;
+        if (arg is not SocketUserMessage message) return;
         
-        // Create a number to track where the prefix ends and the command begins
-        int pos = 0;
-        // Replace the '!' with whatever character
-        // you want to prefix your commands with.
-        // Uncomment the second half if you also want
-        // commands to be invoked by mentioning the bot instead.
-        if (msg.HasCharPrefix('!', ref pos) /* || msg.HasMentionPrefix(_client.CurrentUser, ref pos) */)
-        {
-            // Create a Command Context.
-            var context = new SocketCommandContext(_client, msg);
-            
-            // Execute the command. (result does not indicate a return value, 
-            // rather an object stating if the command executed successfully).
-            var result = await _commands.ExecuteAsync(context, pos, _services);
+        int argPos = 0;
 
-            // Uncomment the following lines if you want the bot
-            // to send a message if it failed.
-            // This does not catch errors from commands with 'RunMode.Async',
-            // subscribe a handler for '_commands.CommandExecuted' to see those.
-            //if (!result.IsSuccess && result.Error != CommandError.UnknownCommand)
-            //    await msg.Channel.SendMessageAsync(result.ErrorReason);
+        if (!(message.HasCharPrefix('!', ref argPos) || message.HasMentionPrefix(_client.CurrentUser, ref argPos)) || message.Author.IsBot)
+            return;
+
+        var context = new SocketCommandContext(_client, message);
+        
+        var result = await _commands.ExecuteAsync(
+            context: context, 
+            argPos: argPos,
+            services: _services);
+        
+
+        if (!result.IsSuccess)
+        {
+            if (result.Error == CommandError.UnknownCommand)
+            {
+                await message.Channel.SendMessageAsync("Трясця, я тебе не розумію");   
+            }
+            else
+            {
+                await message.Channel.SendMessageAsync("А йди ти до дідька");   
+            }
         }
     }
-    
+
     private static Task Log(LogMessage message)
     {
         switch (message.Severity)
